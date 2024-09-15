@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ServerLibrary.Data;
 using ServerLibrary.Helpers;
@@ -14,8 +15,20 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AppConStr") ??
-                         throw new InvalidOperationException("Could not find connection string")));
+    {
+        // options.UseSqlServer(builder.Configuration.GetConnectionString("AppConStr") ??
+        //                      throw new InvalidOperationException("Could not find connection string"))
+
+        var conStrBuilder =
+            new SqlConnectionStringBuilder(builder.Configuration.GetConnectionString("DefaultConnection") ??
+                                           throw new InvalidOperationException("Could not find connection string"))
+                {
+                    UserID = builder.Configuration["DbCon:user"],
+                    Password = builder.Configuration["DbCon:password"]
+                };
+        options.UseSqlServer(conStrBuilder.ConnectionString);
+    }
+);
 
 builder.Services.Configure<JwtSection>(builder.Configuration.GetSection("JwtSection"));
 builder.Services.AddScoped<IUserAccount, UserAccountRepository>();
